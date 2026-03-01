@@ -1,153 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Hive System</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: white;
+            font-family: Arial;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #111;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .panel {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+        }
+
+        button {
+            background: #ffcc00;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #ffe680;
+        }
+
+        input, select {
+            padding: 8px;
+            width: 90%;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .member-card {
+            background: #262626;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .role-card {
+            background: #262626;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .small-btn {
+            padding: 5px 10px;
+            background: #ff4444;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<header>🐝 THE HIVE SYSTEM — OWNER MODE ENABLED</header>
+
+<div class="container">
+
+    <!-- OWNER PANEL -->
+    <div class="panel">
+        <h2>Owner Panel</h2>
+
+        <h3>Create New Role</h3>
+        <input id="roleName" placeholder="Role name...">
+        <button onclick="createRole()">Add Role</button>
+
+        <div id="roleList"></div>
+
+        <hr>
+
+        <h3>Add New Member</h3>
+        <input id="memberName" placeholder="Member username...">
+        <select id="memberRole"></select>
+        <button onclick="addMember()">Add Member</button>
+
+        <div id="memberList"></div>
+    </div>
+
+</div>
+
 <script>
-// Always load owner
-let defaultUsers = [
-    { username: "j9vr", isMember: true, isOwner: true }
-];
+    let roles = ["Owner", "Admin", "Member"];
+    let members = [
+        { name: "j9vr", role: "Owner" }
+    ];
 
-// Load saved users or create fresh
-let users = JSON.parse(localStorage.getItem("hiveUsers"));
-if (!users || users.length === 0) {
-    users = defaultUsers;
-    localStorage.setItem("hiveUsers", JSON.stringify(users));
-}
-
-let currentUser = null;
-let isOwner = false;
-let isRegister = false;
-
-// Toggle login/register
-function toggleAuth() {
-    isRegister = !isRegister;
-    document.getElementById("authTitle").textContent =
-        isRegister ? "Create Account" : "The Hive System Login";
-    document.getElementById("authBtn").textContent =
-        isRegister ? "Register" : "Login";
-    document.getElementById("passwordField").style.display = "none";
-}
-
-// Auth system (no password)
-function authenticate() {
-    const username = document.getElementById("authUsername").value.trim();
-    if (!username) return alert("Enter a username");
-
-    if (isRegister) {
-        if (users.some(u => u.username === username))
-            return alert("Username already exists");
-
-        users.push({ username, isMember: false, isOwner: false });
-        localStorage.setItem("hiveUsers", JSON.stringify(users));
-        alert("Account created");
-        toggleAuth();
-        return;
+    function updateRoleDropdown() {
+        let dropdown = document.getElementById("memberRole");
+        dropdown.innerHTML = "";
+        roles.forEach(r => {
+            let option = document.createElement("option");
+            option.value = r;
+            option.textContent = r;
+            dropdown.appendChild(option);
+        });
     }
 
-    // Login
-    let user = users.find(u => u.username === username);
-    if (!user) return alert("User not found");
-
-    currentUser = user;
-    isOwner = user.isOwner;
-
-    document.getElementById("ownerPanelBtn").style.display =
-        isOwner ? "block" : "none";
-
-    document.getElementById("authScreen").style.display = "none";
-    document.getElementById("hiveSystem").style.display = "block";
-    refreshMembers();
-}
-
-// Logout
-function logout() {
-    currentUser = null;
-    isOwner = false;
-    document.getElementById("hiveSystem").style.display = "none";
-    document.getElementById("authScreen").style.display = "flex";
-}
-
-// Toggle owner panel
-function toggleOwnerPanel() {
-    const panel = document.getElementById("ownerPanel");
-    panel.style.display = panel.style.display === "block" ? "none" : "block";
-}
-
-// Refresh members
-function refreshMembers() {
-    const display = document.getElementById("membersListDisplay");
-    display.innerHTML = "";
-
-    users.filter(u => u.isMember).forEach(u => {
-        const div = document.createElement("div");
-        div.className = "member";
-        div.textContent = `${u.username}${u.isOwner ? " (Owner)" : ""}`;
-        display.appendChild(div);
-    });
-
-    if (!isOwner) return;
-
-    const ownerList = document.getElementById("membersList");
-    ownerList.innerHTML = "";
-
-    users.forEach((u, i) => {
-        const div = document.createElement("div");
-        div.className = "member";
-        div.innerHTML = `
-            ${u.username} ${u.isOwner ? "(Owner)" : "(Member)"}
-            <div class="memberControl">
-                <button class="delete" onclick="removeMember(${i})">Remove</button>
-            </div>`;
-        ownerList.appendChild(div);
-    });
-
-    localStorage.setItem("hiveUsers", JSON.stringify(users));
-}
-
-// Grant member role
-function grantMember() {
-    const name = document.getElementById("grantUsername").value.trim();
-    const user = users.find(u => u.username === name);
-    if (!user) return alert("User not found");
-
-    user.isMember = true;
-    localStorage.setItem("hiveUsers", JSON.stringify(users));
-    refreshMembers();
-}
-
-// Grant owner role
-function grantOwner() {
-    const name = document.getElementById("grantUsername").value.trim();
-    const user = users.find(u => u.username === name);
-    if (!user) return alert("User not found");
-
-    user.isOwner = true;
-    localStorage.setItem("hiveUsers", JSON.stringify(users));
-    refreshMembers();
-}
-
-// Remove member
-function removeMember(index) {
-    if (!confirm("Remove user?")) return;
-    users[index].isMember = false;
-    users[index].isOwner = false;
-    localStorage.setItem("hiveUsers", JSON.stringify(users));
-    refreshMembers();
-}
-</script>name===username);
-    if(!user) return alert("User not found");
-    user.isOwner=true;
-    localStorage.setItem("hiveUsers", JSON.stringify(users));
-    document.getElementById("grantUsername").value="";
-    refreshMembers();
-}
-
-// Remove member
-function removeMember(index){
-    const u = users[index];
-    if(confirm(`Remove ${u.username} from members?`)){
-        u.isMember=false;
-        u.isOwner=false;
-        refreshMembers();
+    function displayRoles() {
+        let list = document.getElementById("roleList");
+        list.innerHTML = "";
+        roles.forEach((role, index) => {
+            list.innerHTML += `
+                <div class="role-card">
+                    ${role}
+                    <button class="small-btn" onclick="deleteRole(${index})">Delete</button>
+                </div>
+            `;
+        });
     }
-}
+
+    function createRole() {
+        let name = document.getElementById("roleName").value;
+        if (name.trim() === "") return alert("Enter role name");
+        roles.push(name);
+        updateRoleDropdown();
+        displayRoles();
+        document.getElementById("roleName").value = "";
+    }
+
+    function deleteRole(index) {
+        if (roles[index] === "Owner") return alert("You cannot delete the Owner role.");
+        roles.splice(index, 1);
+        updateRoleDropdown();
+        displayRoles();
+    }
+
+    function displayMembers() {
+        let list = document.getElementById("memberList");
+        list.innerHTML = "";
+        members.forEach((member, index) => {
+            list.innerHTML += `
+                <div class="member-card">
+                    <strong>${member.name}</strong>
+                    <br>Role: ${member.role}
+                    <br>
+                    <button class="small-btn" onclick="editMember(${index})">Edit</button>
+                    <button class="small-btn" onclick="removeMember(${index})">Remove</button>
+                </div>
+            `;
+        });
+    }
+
+    function addMember() {
+        let name = document.getElementById("memberName").value;
+        let role = document.getElementById("memberRole").value;
+
+        if (name.trim() === "") return alert("Enter a name");
+
+        members.push({ name, role });
+        displayMembers();
+        document.getElementById("memberName").value = "";
+    }
+
+    function editMember(index) {
+        let newName = prompt("New name:", members[index].name);
+        if (!newName) return;
+
+        let newRole = prompt("New role:", members[index].role);
+        if (!newRole) return;
+
+        members[index].name = newName;
+        members[index].role = newRole;
+
+        displayMembers();
+    }
+
+    function removeMember(index) {
+        members.splice(index, 1);
+        displayMembers();
+    }
+
+    // Initialize
+    updateRoleDropdown();
+    displayRoles();
+    displayMembers();
 </script>
+
 </body>
 </html>
